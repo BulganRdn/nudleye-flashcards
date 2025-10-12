@@ -1,7 +1,18 @@
 // /components/NavBar.tsx
-'use client';
-import React from 'react';
-import { Search, User, Brain, Home, Library, Compass } from 'lucide-react';
+"use client";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Search,
+  User,
+  Brain,
+  Home,
+  Library,
+  Compass,
+  LogOut,
+  Settings,
+} from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 
 type Props = {
   activeTab: string;
@@ -9,6 +20,27 @@ type Props = {
 };
 
 export default function NavBar({ activeTab, setActiveTab }: Props) {
+  const { data: session, status } = useSession();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" });
+  };
+
   return (
     <nav className="relative border-b border-white/5 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
@@ -26,15 +58,17 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
 
             <div className="hidden md:flex items-center gap-1 bg-white/5 rounded-2xl p-1">
               {[
-                { id: 'home', icon: Home, label: 'Home' },
-                { id: 'library', icon: Library, label: 'Library' },
-                { id: 'discover', icon: Compass, label: 'Discover' },
+                { id: "home", icon: Home, label: "Home" },
+                { id: "library", icon: Library, label: "Library" },
+                { id: "discover", icon: Compass, label: "Discover" },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                    activeTab === tab.id ? 'bg-white text-black font-medium' : 'text-white/60 hover:text-white hover:bg-white/5'
+                    activeTab === tab.id
+                      ? "bg-white text-black font-medium"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
