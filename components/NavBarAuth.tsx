@@ -1,4 +1,3 @@
-// /components/NavBar.tsx
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -45,7 +44,6 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
       });
     } catch (error) {
       console.error("Sign out error:", error);
-      // Fallback - force redirect if signOut fails
       window.location.href = "/";
     }
   };
@@ -56,17 +54,17 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur-lg opacity-50" />
-                <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
-                  <Brain className="w-6 h-6" />
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1CB0F6] to-[#8549BA] rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+                <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-[#1CB0F6] to-[#8549BA] flex items-center justify-center shadow-lg">
+                  <Brain className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <span className="text-xl font-bold">FlashDemo</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">FlashDemo</span>
             </div>
 
             {session && (
-              <div className="hidden md:flex items-center gap-1 bg-white/5 rounded-2xl p-1">
+              <div className="hidden md:flex items-center gap-1 glass-card-dark rounded-2xl p-1">
                 {[
                   { id: "home", icon: Home, label: "Home" },
                   { id: "library", icon: Library, label: "Library" },
@@ -75,14 +73,14 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                    className={`button-press flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${
                       activeTab === tab.id
-                        ? "bg-white text-black font-medium"
+                        ? "bg-gradient-to-r from-[#1CB0F6] to-[#0771B8] text-white shadow-lg"
                         : "text-white/60 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     <tab.icon className="w-4 h-4" />
-                    <span className="text-sm">{tab.label}</span>
+                    <span className="text-sm font-semibold">{tab.label}</span>
                   </button>
                 ))}
               </div>
@@ -96,23 +94,23 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
                 <input
                   type="text"
                   placeholder="Search words..."
-                  className="pl-10 pr-4 py-2.5 w-64 rounded-xl bg-white/5 border border-white/10 focus:border-white/20 focus:bg-white/10 focus:outline-none placeholder-white/40 text-sm transition-all"
+                  className="pl-10 pr-4 py-2.5 w-64 rounded-xl glass-card-dark border border-white/10 focus:border-[#1CB0F6] focus:bg-white/10 focus:outline-none placeholder-white/40 text-sm transition-all"
                   aria-label="Search words"
                 />
               </div>
             )}
 
             {status === "loading" ? (
-              <div className="w-10 h-10 rounded-xl bg-white/5 animate-pulse" />
+              <div className="w-10 h-10 rounded-xl glass-card-dark animate-pulse" />
             ) : session ? (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="relative group flex items-center gap-2"
+                  className="button-press relative group flex items-center gap-2"
                   aria-label="Profile"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
-                  <div className="relative w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 flex items-center justify-center transition-all">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#1CB0F6] to-[#8549BA] rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
+                  <div className="relative w-10 h-10 rounded-xl glass-card-dark border border-white/10 hover:border-[#1CB0F6] flex items-center justify-center transition-all">
                     {session.user?.image ? (
                       <img
                         src={session.user.image}
@@ -120,21 +118,21 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
                         className="w-8 h-8 rounded-lg"
                       />
                     ) : (
-                      <User className="w-5 h-5" />
+                      <User className="w-5 h-5 text-[#1CB0F6]" />
                     )}
                   </div>
                   <div className="hidden sm:block">
-                    <div className="text-sm font-medium">
+                    <div className="text-sm font-semibold">
                       {session.user?.name || "User"}
                     </div>
                   </div>
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-[#1A1A1A]/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl z-[9999]">
+                  <div className="absolute right-0 mt-2 w-56 glass-card-dark border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl z-[9999]">
                     <div className="p-2">
                       <div className="px-3 py-2 border-b border-white/10 mb-1">
-                        <div className="text-sm font-medium truncate">
+                        <div className="text-sm font-semibold truncate">
                           {session.user?.name || "User"}
                         </div>
                         <div className="text-xs text-white/60 truncate">
@@ -145,7 +143,7 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
                       <Link
                         href="/profile"
                         onClick={() => setShowUserMenu(false)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                        className="button-press w-full flex items-center gap-2 px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                       >
                         <Settings className="w-4 h-4" />
                         Profile & Settings
@@ -156,7 +154,7 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
                           setShowUserMenu(false);
                           handleSignOut();
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all mt-1"
+                        className="button-press w-full flex items-center gap-2 px-3 py-2 text-sm text-[#E53838] hover:text-[#FF4444] hover:bg-[#E53838]/10 rounded-xl transition-all mt-1"
                       >
                         <LogOut className="w-4 h-4" />
                         Sign out
@@ -169,13 +167,13 @@ export default function NavBar({ activeTab, setActiveTab }: Props) {
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/signin"
-                  className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
+                  className="button-press px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-sm font-medium hover:scale-105 transition-transform"
+                  className="button-press px-4 py-2 rounded-xl bg-gradient-to-r from-[#1CB0F6] to-[#8549BA] text-sm font-semibold hover:shadow-lg hover:shadow-[#1CB0F6]/30 transition-all"
                 >
                   Sign up
                 </Link>
