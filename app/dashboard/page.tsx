@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import NavBarAuth from "../../components/NavBarAuth";
 import BannerSlider from "../../components/BannerSlider";
 import StatsGrid from "../../components/StatsGrid";
 import DeckList from "../../components/DeckList";
@@ -81,8 +80,6 @@ export default function DashboardPage() {
         <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#58CC02]/10 rounded-full blur-[120px]" />
         <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-[#8549BA]/10 rounded-full blur-[120px]" />
       </div>
-
-      <NavBarAuth activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
         {activeTab === "home" && (

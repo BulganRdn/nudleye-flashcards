@@ -1,102 +1,76 @@
-// /app/api/decks/route.ts
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { prisma } from "../../../lib/prisma";
-import {
-  myDecks as demoMyDecks,
-  trendingDecks as demoTrending,
-} from "../../../components/data";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
-    if (!session?.user?.email) {
-      // Return demo data for non-authenticated users
-      return NextResponse.json({
-        myDecks: [],
-        trending: demoTrending,
-      });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    // Get user's decks with card count and progress
+    const decks = await prisma.deck.findMany({
+      where: {
+        authorId: session.user.id,
+      },
       include: {
-        decks: {
-          include: {
-            cards: true,
-            progress: {
-              where: { userId: session.user.id },
-            },
+        cards: {
+          select: {
+            id: true,
+            dueDate: true,
+            easeFactor: true,
+          },
+        },
+        progress: {
+          where: {
+            userId: session.user.id,
           },
         },
       },
+      orderBy: {
+        updatedAt: "desc",
+      },
     });
 
-    if (!user) {
-      return NextResponse.json({
-        myDecks: [],
-        trending: demoTrending,
-      });
-    }
+    // Transform to frontend format
+    const transformedDecks = decks.map((deck: { progress: any[]; cards: { length: any; filter: (arg0: (card: any) => boolean) => { (): any; new(): any; length: any; }; }; id: any; name: any; emoji: any; description: any; isPublic: any; createdAt: { toISOString: () => any; }; updatedAt: { toISOString: () => any; }; }) => {
+      const progress = deck.progress[0];
+      const totalCards = deck.cards.length;
+      const dueToday = deck.cards.filter(
+        (card) => new Date(card.dueDate) <= new Date()
+      ).length;
 
-    // Transform user decks to match the frontend format
-    const userDecks = user.decks.map((deck) => ({
-      id: parseInt(deck.id, 36), // Convert string ID to number for compatibility
-      name: deck.name,
-      emoji: deck.emoji,
-      words: deck.cards.length,
-      mastered: deck.progress[0]?.mastered || 0,
-      progress:
-        deck.cards.length > 0
-          ? Math.round(
-              ((deck.progress[0]?.mastered || 0) / deck.cards.length) * 100
-            )
+      return {
+        id: deck.id,
+        name: deck.name,
+        emoji: deck.emoji,
+        description: deck.description,
+        words: totalCards,
+        mastered: progress?.mastered || 0,
+        progress: totalCards > 0 
+          ? Math.round(((progress?.mastered || 0) / totalCards) * 100)
           : 0,
-      streak: deck.progress[0]?.streak || 0,
-      dueToday: deck.cards.filter((card) => card.dueDate <= new Date()).length,
-    }));
-
-    // Get trending decks (public decks from other users)
-    const trendingDecks = await prisma.deck.findMany({
-      where: {
-        isPublic: true,
-        authorId: { not: user.id },
-      },
-      include: {
-        cards: true,
-        author: { select: { name: true } },
-      },
-      take: 6,
-      orderBy: { createdAt: "desc" },
+        streak: progress?.streak || 0,
+        dueToday: dueToday,
+        author: session.user.name || "You",
+        isPublic: deck.isPublic,
+        createdAt: deck.createdAt.toISOString(),
+        updatedAt: deck.updatedAt.toISOString(),
+      };
     });
-
-    const transformedTrending = trendingDecks.map((deck) => ({
-      id: parseInt(deck.id, 36),
-      name: deck.name,
-      emoji: deck.emoji,
-      words: deck.cards.length,
-      author: deck.author.name || "Anonymous",
-      users: Math.floor(Math.random() * 10000), // Placeholder
-      rating: 4.5 + Math.random() * 0.5, // Placeholder
-      verified: Math.random() > 0.5, // Placeholder
-      mastered: 0,
-      progress: 0,
-      streak: 0,
-      dueToday: 0,
-    }));
 
     return NextResponse.json({
-      myDecks: userDecks.length > 0 ? userDecks : demoMyDecks,
-      trending:
-        transformedTrending.length > 0 ? transformedTrending : demoTrending,
+      myDecks: transformedDecks,
+      success: true,
     });
   } catch (error) {
     console.error("Error fetching decks:", error);
-    return NextResponse.json({
-      myDecks: demoMyDecks,
-      trending: demoTrending,
-    });
+    return NextResponse.json(
+      { error: "Failed to fetch decks" },
+      { status: 500 }
+    );
   }
 }

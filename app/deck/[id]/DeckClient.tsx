@@ -147,7 +147,7 @@ export default function DeckClient({ deck }: Props) {
                   <h1 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
                     {deck.name}
                   </h1>
-                  <p className="text-white/60 text-base leading-relaxed">{deck.description}</p>
+                  <p className="text-white/60 text-base leading-relaxed line-clamp-3">{deck.description}</p>
                 </div>
 
                 <div className="flex-shrink-0">
@@ -330,7 +330,11 @@ export default function DeckClient({ deck }: Props) {
               <div className="flex flex-col sm:flex-row items-start gap-6">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0 glass-card-dark">
-                    <img src={deck.creator.avatar} alt={deck.creator.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={deck.creator.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(deck.creator.name || 'user')}`}
+                      alt={deck.creator.name} 
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-1">{deck.creator.name}</h3>
