@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Play,
@@ -13,8 +13,8 @@ import {
   Check,
   Sparkles,
   Clock,
-} from 'lucide-react';
-import type { DeckDetail } from '@/types';
+} from "lucide-react";
+import type { DeckDetail } from "@/types";
 
 type Props = {
   deck: DeckDetail;
@@ -26,8 +26,10 @@ export default function DeckClient({ deck }: Props) {
   const [flipped, setFlipped] = useState(false);
   const [rating, setRating] = useState(0);
   const [showList, setShowList] = useState(false);
-  const [formattedDate, setFormattedDate] = useState('');
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [formattedDate, setFormattedDate] = useState("");
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
+    null
+  );
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -35,29 +37,29 @@ export default function DeckClient({ deck }: Props) {
 
   useEffect(() => {
     if (deck?.createdAt) {
-      setFormattedDate(new Date(deck.createdAt).toLocaleDateString('mn-MN'));
+      setFormattedDate(new Date(deck.createdAt).toLocaleDateString("mn-MN"));
     }
   }, [deck?.createdAt]);
 
   useEffect(() => {
     if (!deck?.wordsList?.length) return;
-    
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        setSlideDirection('right');
+      if (e.key === "ArrowLeft") {
+        setSlideDirection("right");
         setCurrentIndex((p) => Math.max(0, p - 1));
         setFlipped(false);
-      } else if (e.key === 'ArrowRight') {
-        setSlideDirection('left');
+      } else if (e.key === "ArrowRight") {
+        setSlideDirection("left");
         setCurrentIndex((p) => Math.min(deck.wordsList.length - 1, p + 1));
         setFlipped(false);
-      } else if (e.key === ' ' || e.key === 'Spacebar') {
+      } else if (e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
         setFlipped((p) => !p);
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [deck?.wordsList?.length]);
 
   useEffect(() => {
@@ -69,7 +71,7 @@ export default function DeckClient({ deck }: Props) {
 
   useEffect(() => {
     if (!deck?.wordsList?.length) return;
-    
+
     const el = cardRef.current;
     if (!el) return;
 
@@ -82,11 +84,11 @@ export default function DeckClient({ deck }: Props) {
       const dx = touchEndX.current - touchStartX.current;
       const threshold = 40;
       if (dx > threshold) {
-        setSlideDirection('right');
+        setSlideDirection("right");
         setCurrentIndex((p) => Math.max(0, p - 1));
         setFlipped(false);
       } else if (dx < -threshold) {
-        setSlideDirection('left');
+        setSlideDirection("left");
         setCurrentIndex((p) => Math.min(deck.wordsList.length - 1, p + 1));
         setFlipped(false);
       }
@@ -94,11 +96,11 @@ export default function DeckClient({ deck }: Props) {
       touchEndX.current = null;
     };
 
-    el.addEventListener('touchstart', onTouchStart);
-    el.addEventListener('touchend', onTouchEnd);
+    el.addEventListener("touchstart", onTouchStart);
+    el.addEventListener("touchend", onTouchEnd);
     return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchend", onTouchEnd);
     };
   }, [deck?.wordsList?.length]);
 
@@ -147,19 +149,23 @@ export default function DeckClient({ deck }: Props) {
                   <h1 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
                     {deck.name}
                   </h1>
-                  <p className="text-white/60 text-base leading-relaxed line-clamp-3">{deck.description}</p>
+                  <p className="text-white/60 text-base leading-relaxed line-clamp-3">
+                    {deck.description}
+                  </p>
                 </div>
 
                 <div className="flex-shrink-0">
                   <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF9600] to-[#FFC800] shadow-lg">
                     <Sparkles className="w-5 h-5 text-white" />
-                    <div className="text-xl font-bold text-white">{deck.streak}</div>
+                    <div className="text-xl font-bold text-white">
+                      {deck.streak}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-[#1CB0F6] via-[#8549BA] to-[#58CC02] rounded-full transition-all duration-500"
                   style={{ width: `${deck.progress}%` }}
                 />
@@ -197,15 +203,21 @@ export default function DeckClient({ deck }: Props) {
                 {slideDirection && (
                   <div
                     className={`absolute inset-0 transition-transform duration-500 ease-out pointer-events-none ${
-                      slideDirection === 'left' 
-                        ? '-translate-x-full' 
-                        : 'translate-x-full'
+                      slideDirection === "left"
+                        ? "-translate-x-full"
+                        : "translate-x-full"
                     }`}
                   >
                     <div className="absolute inset-0 rounded-3xl p-8 flex items-center justify-center bg-gradient-to-br from-[#1CB0F6]/30 via-[#8549BA]/20 to-[#58CC02]/10 border-2 border-[#1CB0F6]/50">
                       <div className="text-center">
                         <div className="text-6xl md:text-7xl font-black tracking-tight bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent mb-6">
-                          {deck.wordsList[slideDirection === 'left' ? currentIndex - 1 : currentIndex + 1]?.korean}
+                          {
+                            deck.wordsList[
+                              slideDirection === "left"
+                                ? currentIndex - 1
+                                : currentIndex + 1
+                            ]?.korean
+                          }
                         </div>
                       </div>
                     </div>
@@ -215,52 +227,74 @@ export default function DeckClient({ deck }: Props) {
                 <div
                   onClick={() => setFlipped((p) => !p)}
                   className={`absolute inset-0 transition-transform duration-500 ease-out ${
-                    slideDirection === 'left' 
-                      ? 'translate-x-0' 
-                      : slideDirection === 'right' 
-                      ? 'translate-x-0' 
-                      : 'translate-x-0'
+                    slideDirection === "left"
+                      ? "translate-x-0"
+                      : slideDirection === "right"
+                      ? "translate-x-0"
+                      : "translate-x-0"
                   }`}
-                  style={{ 
-                    transform: slideDirection 
-                      ? slideDirection === 'left' 
-                        ? 'translateX(100%)' 
-                        : 'translateX(-100%)'
-                      : 'translateX(0)',
-                    animation: slideDirection ? 'slideIn 0.5s ease-out forwards' : 'none'
+                  style={{
+                    transform: slideDirection
+                      ? slideDirection === "left"
+                        ? "translateX(100%)"
+                        : "translateX(-100%)"
+                      : "translateX(0)",
+                    animation: slideDirection
+                      ? "slideIn 0.5s ease-out forwards"
+                      : "none",
                   }}
                 >
-                  <div className="relative w-full h-full cursor-pointer" style={{ perspective: '1500px' }}>
+                  <div
+                    className="relative w-full h-full cursor-pointer"
+                    style={{ perspective: "1500px" }}
+                  >
                     <div
                       className="relative w-full h-full transition-transform duration-700"
                       style={{
-                        transformStyle: 'preserve-3d',
-                        transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                        transformStyle: "preserve-3d",
+                        transform: flipped
+                          ? "rotateY(180deg)"
+                          : "rotateY(0deg)",
                       }}
                     >
                       <div
                         className="absolute inset-0 rounded-3xl p-8 flex items-center justify-center bg-gradient-to-br from-[#1CB0F6]/30 via-[#8549BA]/20 to-[#58CC02]/10 border-2 border-[#1CB0F6]/50"
-                        style={{ backfaceVisibility: 'hidden' }}
+                        style={{ backfaceVisibility: "hidden" }}
                       >
                         <div className="text-center">
                           <div className="text-6xl md:text-7xl font-black tracking-tight bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent mb-6">
                             {currentWord.korean}
                           </div>
-                          <div className="text-white/40 text-sm">Space or tap to flip</div>
+                          <div className="text-white/40 text-sm">
+                            Space or tap to flip
+                          </div>
                         </div>
                       </div>
 
                       <div
                         className="absolute inset-0 rounded-3xl p-8 flex items-center justify-center bg-gradient-to-br from-[#8549BA]/30 via-[#1CB0F6]/20 to-[#58CC02]/10 border-2 border-[#8549BA]/50"
-                        style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                        style={{
+                          backfaceVisibility: "hidden",
+                          transform: "rotateY(180deg)",
+                        }}
                       >
                         <div className="text-center">
                           <div className="text-5xl md:text-6xl font-black tracking-tight bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent mb-6">
                             {currentWord.mongolian}
                           </div>
-                          <span className={`inline-flex items-center gap-3 px-6 py-3 rounded-full text-base font-semibold ${currentWord.mastered ? 'bg-[#58CC02]/20 text-[#58CC02] border border-[#58CC02]/40' : 'bg-[#FFC715]/20 text-[#FFC715] border border-[#FFC715]/40'}`}>
-                            {currentWord.mastered ? <Check className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
-                            {currentWord.mastered ? 'Эзэмшсэн' : 'Сургаж байна'}
+                          <span
+                            className={`inline-flex items-center gap-3 px-6 py-3 rounded-full text-base font-semibold ${
+                              currentWord.mastered
+                                ? "bg-[#58CC02]/20 text-[#58CC02] border border-[#58CC02]/40"
+                                : "bg-[#FFC715]/20 text-[#FFC715] border border-[#FFC715]/40"
+                            }`}
+                          >
+                            {currentWord.mastered ? (
+                              <Check className="w-5 h-5" />
+                            ) : (
+                              <Clock className="w-5 h-5" />
+                            )}
+                            {currentWord.mastered ? "Эзэмшсэн" : "Сургаж байна"}
                           </span>
                         </div>
                       </div>
@@ -271,7 +305,9 @@ export default function DeckClient({ deck }: Props) {
                 <style jsx>{`
                   @keyframes slideIn {
                     from {
-                      transform: translateX(${slideDirection === 'left' ? '100%' : '-100%'});
+                      transform: translateX(
+                        ${slideDirection === "left" ? "100%" : "-100%"}
+                      );
                     }
                     to {
                       transform: translateX(0);
@@ -283,7 +319,7 @@ export default function DeckClient({ deck }: Props) {
               <div className="mt-8 flex items-center justify-between gap-4">
                 <button
                   onClick={() => {
-                    setSlideDirection('right');
+                    setSlideDirection("right");
                     setCurrentIndex((p) => Math.max(0, p - 1));
                     setFlipped(false);
                   }}
@@ -297,8 +333,10 @@ export default function DeckClient({ deck }: Props) {
 
                 <button
                   onClick={() => {
-                    setSlideDirection('left');
-                    setCurrentIndex((p) => Math.min(deck.wordsList.length - 1, p + 1));
+                    setSlideDirection("left");
+                    setCurrentIndex((p) =>
+                      Math.min(deck.wordsList.length - 1, p + 1)
+                    );
                     setFlipped(false);
                   }}
                   disabled={currentIndex === deck.wordsList.length - 1}
@@ -319,7 +357,12 @@ export default function DeckClient({ deck }: Props) {
                 <Stat label="Нийт үг" value={deck.words} tone="blue" />
                 <Stat label="Эзэмшсэн" value={deck.mastered} tone="green" />
                 <Stat label="Явц" value={`${deck.progress}%`} tone="purple" />
-                <Stat label="Үнэлгээ" value={deck.rating} tone="yellow" sub={`${deck.totalRatings} үнэлгээ`} />
+                <Stat
+                  label="Үнэлгээ"
+                  value={deck.rating}
+                  tone="yellow"
+                  sub={`${deck.totalRatings} үнэлгээ`}
+                />
               </div>
             </div>
           </div>
@@ -330,15 +373,24 @@ export default function DeckClient({ deck }: Props) {
               <div className="flex flex-col sm:flex-row items-start gap-6">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0 glass-card-dark">
-                    <img 
-                      src={deck.creator.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(deck.creator.name || 'user')}`}
-                      alt={deck.creator.name} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={
+                        deck.creator.avatar ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                          deck.creator.name || "user"
+                        )}`
+                      }
+                      alt={deck.creator.name}
+                      className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-1">{deck.creator.name}</h3>
-                    <div className="text-sm text-white/50 mb-2">{deck.creator.decksCreated} deck үүсгэсэн</div>
+                    <h3 className="font-bold text-lg mb-1">
+                      {deck.creator.name}
+                    </h3>
+                    <div className="text-sm text-white/50 mb-2">
+                      {deck.creator.decksCreated} deck үүсгэсэн
+                    </div>
                     <div className="flex items-center gap-2 text-xs text-white/40">
                       <Calendar className="w-4 h-4" />
                       <span>{formattedDate}</span>
@@ -352,15 +404,28 @@ export default function DeckClient({ deck }: Props) {
                       <Star className="w-6 h-6 fill-[#FFC715] text-[#FFC715]" />
                       <span className="text-3xl font-bold">{deck.rating}</span>
                     </div>
-                    <div className="text-sm text-white/50">{deck.totalRatings} үнэлгээ</div>
+                    <div className="text-sm text-white/50">
+                      {deck.totalRatings} үнэлгээ
+                    </div>
                   </div>
 
                   <div className="space-y-3">
                     <div className="text-sm text-white/50">Таны үнэлгээ</div>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((s) => (
-                        <button key={s} aria-label={`Rate ${s}`} onClick={() => setRating(s)} className="button-press transition-all hover:scale-125 active:scale-110">
-                          <Star className={`w-8 h-8 transition-colors ${s <= rating ? 'fill-[#FFC715] text-[#FFC715]' : 'text-white/20 hover:text-white/40'}`} />
+                        <button
+                          key={s}
+                          aria-label={`Rate ${s}`}
+                          onClick={() => setRating(s)}
+                          className="button-press transition-all hover:scale-125 active:scale-110"
+                        >
+                          <Star
+                            className={`w-8 h-8 transition-colors ${
+                              s <= rating
+                                ? "fill-[#FFC715] text-[#FFC715]"
+                                : "text-white/20 hover:text-white/40"
+                            }`}
+                          />
                         </button>
                       ))}
                     </div>
@@ -383,19 +448,50 @@ export default function DeckClient({ deck }: Props) {
             </div>
           </button>
 
+          <button
+            onClick={async () => {
+              const res = await fetch("/api/test-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  deckId: deck.id,
+                  sessionType: "test",
+                  totalCards: deck.wordsList.length,
+                }),
+              });
+              if (res.ok) {
+                const data = await res.json();
+                router.push(`/review/test/${data.sessionId}`);
+              }
+            }}
+            className="button-press w-full group/test relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#8549BA] via-[#FF9600] to-[#FFC715] blur-xl opacity-50 group-hover/test:opacity-80 transition-opacity duration-200" />
+            <div className="relative py-4 bg-gradient-to-r from-[#8549BA] to-[#FF9600] hover:from-[#6435A0] hover:to-[#CC7700] rounded-2xl font-semibold text-base flex items-center justify-center gap-3 transition-all border border-[#8549BA]/50 shadow-lg">
+              <Sparkles className="w-5 h-5" />
+              Тест эхлүүлэх
+            </div>
+          </button>
+
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-[#58CC02] to-[#3A8500] rounded-3xl blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
             <div className="relative glass-card-dark rounded-3xl p-6">
-              <button 
+              <button
                 onClick={() => setShowList((s) => !s)}
                 className="button-press w-full flex items-center justify-between mb-4 group/toggle"
               >
-                <h4 className="font-bold text-lg">Үгсийн жагсаалт ({deck.wordsList.length} үг)</h4>
+                <h4 className="font-bold text-lg">
+                  Үгсийн жагсаалт ({deck.wordsList.length} үг)
+                </h4>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-[#1CB0F6] group-hover/toggle:text-[#58CC02] font-semibold transition-colors">
-                    {showList ? 'Хураах' : 'Үзэх'}
+                    {showList ? "Хураах" : "Үзэх"}
                   </span>
-                  <ChevronRight className={`w-5 h-5 text-[#1CB0F6] transition-transform duration-300 ${showList ? 'rotate-90' : ''}`} />
+                  <ChevronRight
+                    className={`w-5 h-5 text-[#1CB0F6] transition-transform duration-300 ${
+                      showList ? "rotate-90" : ""
+                    }`}
+                  />
                 </div>
               </button>
 
@@ -404,13 +500,22 @@ export default function DeckClient({ deck }: Props) {
                   <div>
                     <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-[#58CC02]/10 rounded-xl border border-[#58CC02]/30">
                       <Check className="w-4 h-4 text-[#58CC02]" />
-                      <span className="text-sm font-semibold text-[#58CC02]">Эзэмшсэн ({mastered.length})</span>
+                      <span className="text-sm font-semibold text-[#58CC02]">
+                        Эзэмшсэн ({mastered.length})
+                      </span>
                     </div>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {mastered.map((w) => (
-                        <div key={w.id} className="glass-card-dark hover:bg-white/10 rounded-xl p-3 transition-all border border-white/10 hover:border-white/20">
-                          <div className="font-semibold text-sm">{w.korean}</div>
-                          <div className="text-xs text-white/50">{w.mongolian}</div>
+                        <div
+                          key={w.id}
+                          className="glass-card-dark hover:bg-white/10 rounded-xl p-3 transition-all border border-white/10 hover:border-white/20"
+                        >
+                          <div className="font-semibold text-sm">
+                            {w.korean}
+                          </div>
+                          <div className="text-xs text-white/50">
+                            {w.mongolian}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -419,13 +524,22 @@ export default function DeckClient({ deck }: Props) {
                   <div>
                     <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-[#FFC715]/10 rounded-xl border border-[#FFC715]/30">
                       <Clock className="w-4 h-4 text-[#FFC715]" />
-                      <span className="text-sm font-semibold text-[#FFC715]">Сургаж байна ({learning.length})</span>
+                      <span className="text-sm font-semibold text-[#FFC715]">
+                        Сургаж байна ({learning.length})
+                      </span>
                     </div>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {learning.map((w) => (
-                        <div key={w.id} className="glass-card-dark hover:bg-white/10 rounded-xl p-3 transition-all border border-white/10 hover:border-white/20">
-                          <div className="font-semibold text-sm">{w.korean}</div>
-                          <div className="text-xs text-white/50">{w.mongolian}</div>
+                        <div
+                          key={w.id}
+                          className="glass-card-dark hover:bg-white/10 rounded-xl p-3 transition-all border border-white/10 hover:border-white/20"
+                        >
+                          <div className="font-semibold text-sm">
+                            {w.korean}
+                          </div>
+                          <div className="text-xs text-white/50">
+                            {w.mongolian}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -440,17 +554,39 @@ export default function DeckClient({ deck }: Props) {
   );
 }
 
-function Stat({ label, value, tone = 'blue', sub }: { label: string; value: string | number; tone?: 'blue' | 'green' | 'purple' | 'yellow'; sub?: string }) {
+function Stat({
+  label,
+  value,
+  tone = "blue",
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  tone?: "blue" | "green" | "purple" | "yellow";
+  sub?: string;
+}) {
   const toneMap: Record<string, { gradient: string; text: string }> = {
-    blue: { gradient: 'from-[#1CB0F6] to-[#0771B8]', text: 'text-[#1CB0F6]' },
-    green: { gradient: 'from-[#58CC02] to-[#3A8500]', text: 'text-[#58CC02]' },
-    purple: { gradient: 'from-[#8549BA] to-[#6435A0]', text: 'text-[#8549BA]' },
-    yellow: { gradient: 'from-[#FFC715] to-[#FF9600]', text: 'text-[#FFC715]' },
+    blue: { gradient: "from-[#1CB0F6] to-[#0771B8]", text: "text-[#1CB0F6]" },
+    green: { gradient: "from-[#58CC02] to-[#3A8500]", text: "text-[#58CC02]" },
+    purple: { gradient: "from-[#8549BA] to-[#6435A0]", text: "text-[#8549BA]" },
+    yellow: { gradient: "from-[#FFC715] to-[#FF9600]", text: "text-[#FFC715]" },
   };
   const { gradient, text } = toneMap[tone];
   return (
-    <div className={`rounded-2xl p-4 bg-gradient-to-br ${gradient}/20 border border-${tone === 'blue' ? '[#1CB0F6]' : tone === 'green' ? '[#58CC02]' : tone === 'purple' ? '[#8549BA]' : '[#FFC715]'}/30 hover:scale-105 transition-transform duration-200`}>
-      <div className="text-xs text-white/50 mb-1 font-medium uppercase tracking-wide">{label}</div>
+    <div
+      className={`rounded-2xl p-4 bg-gradient-to-br ${gradient}/20 border border-${
+        tone === "blue"
+          ? "[#1CB0F6]"
+          : tone === "green"
+          ? "[#58CC02]"
+          : tone === "purple"
+          ? "[#8549BA]"
+          : "[#FFC715]"
+      }/30 hover:scale-105 transition-transform duration-200`}
+    >
+      <div className="text-xs text-white/50 mb-1 font-medium uppercase tracking-wide">
+        {label}
+      </div>
       <div className={`text-2xl font-bold ${text}`}>{value}</div>
       {sub && <div className="text-xs text-white/40 mt-1">{sub}</div>}
     </div>
