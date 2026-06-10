@@ -1,27 +1,146 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+    // ШИНЭ ЦОМОГ ҮҮСГЭХ (хоосон эсвэл карт агуулсан цомог)
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Зөвшөөрөлгүй хандалт" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { name, emoji, description, isPublic, words } = body;
+
+    const normalizedName = typeof name === "string" ? name.trim() : "";
+    const normalizedDescription = typeof description === "string" ? description.trim() : "";
+    const normalizedWords = Array.isArray(words)
+      ? words.map((word) => ({
+          korean: typeof word?.korean === "string" ? word.korean.trim() : "",
+          mongolian: typeof word?.mongolian === "string" ? word.mongolian.trim() : "",
+        }))
+      : [];
+
+    if (!normalizedName || normalizedName.length > 80) {
+      return NextResponse.json(
+        { error: "Багцын нэр 1-80 тэмдэгт байна." },
+        { status: 400 }
+      );
+    }
+
+    if (normalizedDescription.length > 300) {
+      return NextResponse.json({ error: "Тайлбар 300 тэмдэгтээс урт байж болохгүй." }, { status: 400 });
+    }
+
+    if (normalizedWords.length > 500 || normalizedWords.some((word) => !word.korean || !word.mongolian)) {
+      return NextResponse.json(
+        { error: "Карт бүрийн хоёр талыг бөглөж, нэг багцад 500 хүртэл карт оруулна уу." },
+        { status: 400 }
+      );
+    }
+
+    if (normalizedWords.length > 0) {
+      const deck = await prisma.deck.create({
+        data: {
+          name: normalizedName,
+          description: normalizedDescription,
+          emoji: typeof emoji === "string" && emoji.trim() ? emoji.trim() : "📚",
+          isPublic: isPublic === true,
+          authorId: session.user.id,
+          cards: {
+            create: normalizedWords.map((word) => ({
+              front: word.korean,
+              back: word.mongolian,
+              easeFactor: 2.5,
+              interval: 1,
+              repetition: 0,
+              dueDate: new Date(),
+            })),
+          },
+          progress: {
+            create: {
+              userId: session.user.id,
+              mastered: 0,
+              total: normalizedWords.length,
+              streak: 0,
+            },
+          },
+        },
+        include: {
+          cards: true,
+        },
+      });
+
+      return NextResponse.json({
+        id: deck.id,
+        success: true,
+        message: "Багц амжилттай үүсгэгдлээ.",
+      });
+    }
+
+    const deck = await prisma.deck.create({
+      data: {
+        name: normalizedName,
+        emoji: typeof emoji === "string" && emoji.trim() ? emoji.trim() : "📚",
+        description: normalizedDescription || null,
+        isPublic: isPublic === true,
+        authorId: session.user.id,
+        progress: {
+          create: {
+            userId: session.user.id,
+            mastered: 0,
+            total: 0,
+            streak: 0,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      id: deck.id,
+      success: true,
+      message: "Хоосон багц амжилттай үүсгэгдлээ."
+    });
+  } catch (err) {
+    console.error("Багц үүсгэхэд алдаа:", err);
+    return NextResponse.json(
+      { error: "Багц үүсгэж чадсангүй." },
+      { status: 500 }
+    );
+  }
+}
+
+// ХЭРЭГЛЭГЧИЙН ЦОМГИЙГ АВАХ
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Зөвшөөрөлгүй хандалт" }, { status: 401 });
     }
 
-    // Get user's decks with card count and progress
+    const now = new Date();
+
+    // Fetch only due card ids; use the relation count for the full deck size.
     const decks = await prisma.deck.findMany({
       where: {
         authorId: session.user.id,
       },
       include: {
+        _count: {
+          select: {
+            cards: true,
+          },
+        },
         cards: {
+          where: {
+            dueDate: { lte: now },
+          },
           select: {
             id: true,
-            dueDate: true,
-            easeFactor: true,
           },
         },
         progress: {
@@ -36,12 +155,10 @@ export async function GET() {
     });
 
     // Transform to frontend format
-    const transformedDecks = decks.map((deck: { progress: any[]; cards: { length: any; filter: (arg0: (card: any) => boolean) => { (): any; new(): any; length: any; }; }; id: any; name: any; emoji: any; description: any; isPublic: any; createdAt: { toISOString: () => any; }; updatedAt: { toISOString: () => any; }; }) => {
+    const transformedDecks = decks.map((deck) => {
       const progress = deck.progress[0];
-      const totalCards = deck.cards.length;
-      const dueToday = deck.cards.filter(
-        (card) => new Date(card.dueDate) <= new Date()
-      ).length;
+      const totalCards = deck._count.cards;
+      const dueToday = deck.cards.length;
 
       return {
         id: deck.id,
@@ -67,9 +184,9 @@ export async function GET() {
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching decks:", error);
+    console.error("Цомог авахад алдаа:", error);
     return NextResponse.json(
-      { error: "Failed to fetch decks" },
+      { error: "Цомог авахад амжилтгүй" },
       { status: 500 }
     );
   }

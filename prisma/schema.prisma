@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // NextAuth.js required models
@@ -28,6 +29,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -36,6 +38,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model User {
@@ -54,6 +58,8 @@ model User {
   decks        Deck[]
   progress     UserProgress[]
   testSessions TestSession[]
+
+  @@index([email])
 }
 
 model VerificationToken {
@@ -79,12 +85,16 @@ model Deck {
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   cards    Card[]
   progress UserProgress[]
+
+  @@index([authorId])
+  @@index([isPublic])
+  @@index([createdAt])
 }
 
 model Card {
   id        String   @id @default(cuid())
-  front     String   // Korean text
-  back      String   // Mongolian text
+  front     String   // Prompt side
+  back      String   // Answer side
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -98,6 +108,9 @@ model Card {
   interval   Int     @default(1)
   repetition Int     @default(0)
   dueDate    DateTime @default(now())
+
+  @@index([deckId])
+  @@index([dueDate])
 }
 
 model UserProgress {
@@ -115,6 +128,8 @@ model UserProgress {
   deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
   
   @@unique([userId, deckId])
+  @@index([userId])
+  @@index([deckId])
 }
 
 model TestSession {
@@ -133,19 +148,9 @@ model TestSession {
   updatedAt   DateTime @updatedAt
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
-model DailyTest {
-  id            String   @id @default(cuid())
-  userId        String
-  testDate      DateTime @default(now())
-  cardsReviewed Int      @default(0)
-  cardsCorrect  Int      @default(0)
-  timeSpent     Int      @default(0) // in seconds
-  completed     Boolean  @default(false)
-  streak        Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@unique([userId, testDate])
+  @@index([userId])
+  @@index([deckId])
+  @@index([sessionType])
+  @@index([completedAt])
 }

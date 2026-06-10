@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -8,20 +8,22 @@ export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Зөвшөөрөлгүй хандалт" }, { status: 401 });
     }
 
-    // Get user's decks
-    const userDecks = await prisma.deck.findMany({
+    const now = new Date();
+    const [userDecks, trendingDecks] = await Promise.all([
+      prisma.deck.findMany({
       where: {
         authorId: session.user.id,
       },
       include: {
+        _count: {
+          select: { cards: true },
+        },
         cards: {
-          select: {
-            id: true,
-            dueDate: true,
-          },
+          where: { dueDate: { lte: now } },
+          select: { id: true },
         },
         progress: {
           where: {
@@ -33,10 +35,9 @@ export async function GET() {
         updatedAt: "desc",
       },
       take: 10,
-    });
+      }),
 
-    // Get trending public decks (most downloaded/popular)
-    const trendingDecks = await prisma.deck.findMany({
+      prisma.deck.findMany({
       where: {
         isPublic: true,
         authorId: {
@@ -49,11 +50,7 @@ export async function GET() {
             name: true,
           },
         },
-        cards: {
-          select: {
-            id: true,
-          },
-        },
+        _count: { select: { cards: true } },
         progress: {
           select: {
             userId: true,
@@ -64,15 +61,14 @@ export async function GET() {
         createdAt: "desc",
       },
       take: 20,
-    });
+      }),
+    ]);
 
-    // Transform user decks
-    const transformedMyDecks = userDecks.map((deck: { progress: any[]; cards: { length: any; filter: (arg0: (card: any) => boolean) => { (): any; new(): any; length: any; }; }; id: any; name: any; emoji: any; }) => {
+    // Хэрэглэгчийн цомгуудыг хувиргах
+    const transformedMyDecks = userDecks.map((deck) => {
       const progress = deck.progress[0];
-      const totalCards = deck.cards.length;
-      const dueToday = deck.cards.filter(
-        (card) => new Date(card.dueDate) <= new Date()
-      ).length;
+      const totalCards = deck._count.cards;
+      const dueToday = deck.cards.length;
 
       return {
         id: deck.id,
@@ -88,9 +84,9 @@ export async function GET() {
       };
     });
 
-    // Transform trending decks
-    const transformedTrending = trendingDecks.map((deck: { cards: string | any[]; progress: any[]; id: any; name: any; emoji: any; author: { name: any; }; }) => {
-      const totalCards = deck.cards.length;
+    // Алдартай цомгуудыг хувиргах
+    const transformedTrending = trendingDecks.map((deck) => {
+      const totalCards = deck._count.cards;
       const uniqueUsers = new Set(deck.progress.map((p) => p.userId)).size;
 
       return {
@@ -98,9 +94,8 @@ export async function GET() {
         name: deck.name,
         emoji: deck.emoji,
         words: totalCards,
-        author: deck.author.name || "Anonymous",
+        author: deck.author.name || "Нэргүй",
         users: uniqueUsers,
-        rating: 4.5,
         verified: false,
         mastered: 0,
         progress: 0,
@@ -109,20 +104,20 @@ export async function GET() {
       };
     });
 
-    // Sort trending by popularity
+    // Алдартайгаар эрэмбэлэх
     const sortedTrending = transformedTrending.sort(
-      (a: { users: any; }, b: { users: any; }) => (b.users || 0) - (a.users || 0)
+      (a, b) => (b.users || 0) - (a.users || 0)
     );
 
     return NextResponse.json({
       myDecks: transformedMyDecks,
-      trending: sortedTrending.slice(0, 5), // Top 5 for dashboard
+      trending: sortedTrending.slice(0, 5),
       success: true,
     });
   } catch (error) {
-    console.error("Error fetching dashboard data:", error);
+    console.error("Хяналтын самбарын мэдээлэл авахад алдаа:", error);
     return NextResponse.json(
-      { error: "Failed to fetch dashboard data" },
+      { error: "Хяналтын самбарын мэдээллийг авч чадсангүй." },
       { status: 500 }
     );
   }

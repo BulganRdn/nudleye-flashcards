@@ -1,203 +1,83 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Search,
-  User,
-  Brain,
-  Home,
-  Library,
-  Compass,
-  LogOut,
-  Settings,
-} from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { Compass, LayoutDashboard, Library, LogOut, Plus, UserRound } from "lucide-react";
+import BrandLogo from "@/components/ui/BrandLogo";
+
+const navigation = [
+  { href: "/dashboard", label: "Өнөөдөр", icon: LayoutDashboard },
+  { href: "/library", label: "Миний сан", icon: Library },
+  { href: "/discover", label: "Хуваалцсан", icon: Compass },
+];
 
 export default function PersistentNavBar() {
-  const { data: session, status } = useSession();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
   const pathname = usePathname();
+  const hidden = pathname === "/" || pathname.startsWith("/auth/");
+  if (hidden) return null;
 
-  // All hooks must be called before any conditional returns
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // Don't show navbar on landing page and auth pages
-  const hiddenPaths = ["/", "/auth/signin", "/auth/signup"];
-  const shouldHideNavbar = hiddenPaths.includes(pathname);
-  
-  if (shouldHideNavbar) {
-    return null;
-  }
-
-  const handleSignOut = async () => {
-    try {
-      await signOut({
-        callbackUrl: "/",
-        redirect: true,
-      });
-    } catch (error) {
-      console.error("Sign out error:", error);
-      window.location.href = "/";
-    }
-  };
-
-  // Determine active tab based on pathname
-  const getActiveTab = () => {
-    if (pathname === "/dashboard") return "home";
-    if (pathname.startsWith("/library")) return "library";
-    if (pathname.startsWith("/discover")) return "discover";
-    return "";
-  };
-
-  const activeTab = getActiveTab();
+  const initials = (session?.user?.name || session?.user?.email || "NU")
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <nav className="relative border-b border-white/5 backdrop-blur-xl z-40 bg-[#0A0A0A]/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1CB0F6] to-[#8549BA] rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
-                <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-[#1CB0F6] to-[#8549BA] flex items-center justify-center shadow-lg">
-                  <Brain className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-                FlashDemo
-              </span>
-            </Link>
+    <>
+      <aside className="app-sidebar">
+        <Link href="/dashboard" className="brand-lockup">
+          <BrandLogo markClassName="h-10 w-10" />
+          <span className="min-w-0">
+            <span className="block text-[9px] font-bold tracking-[.11em] text-[var(--text-muted)]">SEE · REMEMBER · REVIEW</span>
+          </span>
+        </Link>
 
-            {session && (
-              <div className="hidden md:flex items-center gap-1 glass-card-dark rounded-2xl p-1">
-                {[
-                  { id: "home", href: "/dashboard", icon: Home, label: "Home" },
-                  { id: "library", href: "/library", icon: Library, label: "Library" },
-                  { id: "discover", href: "/discover", icon: Compass, label: "Discover" },
-                ].map((tab) => (
-                  <Link
-                    key={tab.id}
-                    href={tab.href}
-                    className={`button-press flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${
-                      activeTab === tab.id
-                        ? "bg-gradient-to-r from-[#1CB0F6] to-[#0771B8] text-white shadow-lg"
-                        : "text-white/60 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <tab.icon className="w-4 h-4" />
-                    <span className="text-sm font-semibold">{tab.label}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {session && (
-              <div className="hidden md:block relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                <input
-                  type="text"
-                  placeholder="Search words..."
-                  className="pl-10 pr-4 py-2.5 w-64 rounded-xl glass-card-dark border border-white/10 focus:border-[#1CB0F6] focus:bg-white/10 focus:outline-none placeholder-white/40 text-sm transition-all"
-                  aria-label="Search words"
-                />
-              </div>
-            )}
-
-            {session ? (
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="button-press relative group flex items-center gap-2"
-                  aria-label="Profile"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#1CB0F6] to-[#8549BA] rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
-                  <div className="relative w-10 h-10 rounded-xl glass-card-dark border border-white/10 hover:border-[#1CB0F6] flex items-center justify-center transition-all">
-                    {session.user?.image ? (
-                      <img
-                        src={session.user.image}
-                        alt="Profile"
-                        className="w-8 h-8 rounded-lg"
-                      />
-                    ) : (
-                      <User className="w-5 h-5 text-[#1CB0F6]" />
-                    )}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-sm font-semibold">
-                      {session.user?.name || "User"}
-                    </div>
-                  </div>
-                </button>
-
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 glass-card-dark border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl z-[9999]">
-                    <div className="p-2">
-                      <div className="px-3 py-2 border-b border-white/10 mb-1">
-                        <div className="text-sm font-semibold truncate">
-                          {session.user?.name || "User"}
-                        </div>
-                        <div className="text-xs text-white/60 truncate">
-                          {session.user?.email}
-                        </div>
-                      </div>
-
-                      <Link
-                        href="/profile"
-                        onClick={() => setShowUserMenu(false)}
-                        className="button-press w-full flex items-center gap-2 px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                      >
-                        <Settings className="w-4 h-4" />
-                        Profile & Settings
-                      </Link>
-
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          handleSignOut();
-                        }}
-                        className="button-press w-full flex items-center gap-2 px-3 py-2 text-sm text-[#E53838] hover:text-[#FF4444] hover:bg-[#E53838]/10 rounded-xl transition-all mt-1"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/auth/signin"
-                  className="button-press px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
-                >
-                  Sign in
+        {session && (
+          <nav className="mt-9 space-y-1.5">
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.15em] text-[var(--text-muted)]">Workspace</p>
+            {navigation.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <Link key={href} href={href} className={active ? "nav-link nav-link-active" : "nav-link"}>
+                  <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <span>{label}</span>
+                  {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-current" />}
                 </Link>
-                <Link
-                  href="/auth/signup"
-                  className="button-press px-4 py-2 rounded-xl bg-gradient-to-r from-[#1CB0F6] to-[#8549BA] text-sm font-semibold hover:shadow-lg hover:shadow-[#1CB0F6]/30 transition-all"
-                >
-                  Sign up
-                </Link>
-              </div>
-            )}
-          </div>
+              );
+            })}
+          </nav>
+        )}
+
+        <Link href="/deck/create" className="btn-primary mt-7 w-full px-4 py-3 text-sm">
+          <Plus className="h-4 w-4" aria-hidden="true" /> Шинэ багц
+        </Link>
+
+        <div className="mt-auto rounded-2xl border border-white/70 bg-white/65 p-2 shadow-[0_12px_32px_rgba(39,53,82,.07)] backdrop-blur-xl">
+          <Link href="/profile" className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-white">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#fff1c7] text-xs font-bold text-[#84530f]">{initials}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-bold">{session?.user?.name || "Профайл"}</span>
+              <span className="block truncate text-[10px] text-[var(--text-muted)]">{session?.user?.email}</span>
+            </span>
+            <UserRound className="h-4 w-4 text-[var(--text-muted)]" />
+          </Link>
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="nav-utility">
+            <LogOut className="h-4 w-4" /> Гарах
+          </button>
         </div>
-      </div>
-    </nav>
+      </aside>
+
+      <header className="mobile-topbar">
+        <Link href="/dashboard">
+          <BrandLogo markClassName="h-8 w-8" />
+        </Link>
+        <Link href="/deck/create" className="btn-primary px-3 py-2 text-xs">
+          <Plus className="h-4 w-4" aria-hidden="true" /> Шинэ багц
+        </Link>
+      </header>
+    </>
   );
 }

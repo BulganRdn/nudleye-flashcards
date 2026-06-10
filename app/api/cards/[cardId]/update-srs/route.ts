@@ -1,99 +1,126 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// SM2 Algorithm for spaced repetition
-function calculateNextReview(
-  quality: number, // 0-5 (0=complete blackout, 5=perfect response)
+function applySM2(
   easeFactor: number,
   interval: number,
-  repetition: number
+  repetition: number,
+  quality: number
 ) {
-  let newEaseFactor = easeFactor;
-  let newInterval = interval;
-  let newRepetition = repetition;
+  let nextEaseFactor = easeFactor;
+  let nextInterval = interval;
+  let nextRepetition = repetition;
 
-  if (quality >= 3) {
-    // Correct response
-    if (repetition === 0) {
-      newInterval = 1;
-    } else if (repetition === 1) {
-      newInterval = 6;
-    } else {
-      newInterval = Math.round(interval * easeFactor);
-    }
-    newRepetition = repetition + 1;
+  if (quality < 3) {
+    nextRepetition = 0;
+    nextInterval = 1;
   } else {
-    // Incorrect response - reset
-    newRepetition = 0;
-    newInterval = 1;
+    nextRepetition += 1;
+    if (nextRepetition === 1) nextInterval = 1;
+    else if (nextRepetition === 2) nextInterval = 6;
+    else nextInterval = Math.max(1, Math.round(interval * easeFactor));
   }
 
-  // Update ease factor
-  newEaseFactor =
-    easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  if (newEaseFactor < 1.3) {
-    newEaseFactor = 1.3;
-  }
+  nextEaseFactor +=
+    0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02);
+  nextEaseFactor = Math.max(1.3, nextEaseFactor);
 
-  const nextDueDate = new Date();
-  nextDueDate.setDate(nextDueDate.getDate() + newInterval);
+  const dueDate = new Date();
+  dueDate.setUTCDate(dueDate.getUTCDate() + nextInterval);
 
   return {
-    easeFactor: newEaseFactor,
-    interval: newInterval,
-    repetition: newRepetition,
-    dueDate: nextDueDate,
+    easeFactor: nextEaseFactor,
+    interval: nextInterval,
+    repetition: nextRepetition,
+    dueDate,
   };
 }
 
 export async function POST(
   req: Request,
-  { params }: { params: { cardId: string } }
+  { params }: { params: Promise<{ cardId: string }> }
 ) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Нэвтрэх шаардлагатай." }, { status: 401 });
     }
 
     const body = await req.json();
-    const { correct } = body; // true/false
-
-    const card = await prisma.card.findUnique({
-      where: { id: params.cardId },
-    });
-
-    if (!card) {
-      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    if (typeof body.correct !== "boolean") {
+      return NextResponse.json({ error: "Давталтын дүн буруу байна." }, { status: 400 });
     }
 
-    // Convert boolean to quality (0=wrong, 4=correct)
-    const quality = correct ? 4 : 0;
-
-    const srsData = calculateNextReview(
-      quality,
-      card.easeFactor,
-      card.interval,
-      card.repetition
-    );
-
-    const updatedCard = await prisma.card.update({
-      where: { id: params.cardId },
-      data: {
-        easeFactor: srsData.easeFactor,
-        interval: srsData.interval,
-        repetition: srsData.repetition,
-        dueDate: srsData.dueDate,
+    const { cardId } = await params;
+    const card = await prisma.card.findFirst({
+      where: {
+        id: cardId,
+        deck: { authorId: session.user.id },
       },
     });
 
-    return NextResponse.json({ card: updatedCard });
-  } catch (err) {
-    console.error("Error updating card SRS:", err);
-    return NextResponse.json(
-      { error: "Failed to update card" },
-      { status: 500 }
+    if (!card) {
+      return NextResponse.json({ error: "Карт олдсонгүй." }, { status: 404 });
+    }
+
+    const requestedQuality =
+      typeof body.quality === "number" && Number.isFinite(body.quality)
+        ? Math.round(body.quality)
+        : body.correct
+          ? 4
+          : 0;
+    const quality = body.correct
+      ? Math.min(5, Math.max(3, requestedQuality))
+      : Math.min(2, Math.max(0, requestedQuality));
+
+    const srsUpdate = applySM2(
+      card.easeFactor,
+      card.interval,
+      card.repetition,
+      quality
     );
+
+    const updatedCard = await prisma.$transaction(async (tx) => {
+      const updated = await tx.card.update({
+        where: { id: cardId },
+        data: srsUpdate,
+      });
+
+      const [total, mastered] = await Promise.all([
+        tx.card.count({ where: { deckId: card.deckId } }),
+        tx.card.count({ where: { deckId: card.deckId, interval: { gte: 21 } } }),
+      ]);
+
+      await tx.userProgress.upsert({
+        where: {
+          userId_deckId: {
+            userId: session.user.id,
+            deckId: card.deckId,
+          },
+        },
+        create: {
+          userId: session.user.id,
+          deckId: card.deckId,
+          mastered,
+          total,
+          streak: 0,
+          lastStudy: new Date(),
+        },
+        update: {
+          mastered,
+          total,
+          lastStudy: new Date(),
+        },
+      });
+
+      return updated;
+    });
+
+    return NextResponse.json({ card: updatedCard });
+  } catch (error) {
+    console.error("Картын давталтын төлөв шинэчлэхэд алдаа:", error);
+    return NextResponse.json({ error: "Картын давталтын төлөв шинэчилж чадсангүй." }, { status: 500 });
   }
 }

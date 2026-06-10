@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nudleye
 
-## Getting Started
+Nudleye is a Next.js flashcard learning application built around the loop: see, remember, review.
 
-First, run the development server:
+## Stack
+
+- Next.js 15 App Router
+- React 19 and TypeScript
+- Prisma ORM
+- PostgreSQL in production
+- NextAuth
+- Tailwind CSS 4
+- TanStack Query, Radix UI, and Framer Motion
+
+## Local setup
+
+Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env` and add PostgreSQL and authentication values. Then initialize the database:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm db:migrate:deploy
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Vercel and Neon deployment
 
-## Learn More
+Create a Neon project in the Singapore region when available. Add these variables to Vercel:
 
-To learn more about Next.js, take a look at the following resources:
+```text
+DATABASE_URL
+DATABASE_URL_UNPOOLED
+NEXTAUTH_SECRET
+NEXTAUTH_URL
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Use Neon's pooled connection for `DATABASE_URL` and direct connection for `DATABASE_URL_UNPOOLED`. Set `NEXTAUTH_URL` to the final HTTPS deployment URL. Google variables are optional.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Vercel runs `pnpm vercel-build`, which generates Prisma Client, applies pending migrations, and builds Next.js.
 
-## Deploy on Vercel
+## Demo content
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+To replace all existing decks with ten shared Korean vocabulary decks assigned across registered users:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm db:seed:korean
+```
+
+This command permanently deletes existing decks, cards, and deck progress before inserting the demo content.
+
+## Verification
+
+```bash
+pnpm build
+```
