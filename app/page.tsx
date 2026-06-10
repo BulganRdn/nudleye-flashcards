@@ -65,7 +65,7 @@ export default function LandingPage() {
             <motion.div whileHover={{ y: -4, rotateX: 1 }} transition={{ duration: .2 }} className="flashcard-surface relative min-h-[410px] overflow-hidden">
               <DecorativeLayer variant="hero" />
               <div className="flex items-center justify-between border-b border-[#e6e8ee] px-5 py-3 text-xs text-[#7b7f8c]">
-                <span className="font-semibold">Biology essentials</span>
+                <span className="font-semibold">TOPIK II</span>
                 <span className="rounded-full bg-[#fff1c7] px-2.5 py-1 font-semibold text-[#84530f]">8 / 18</span>
               </div>
               <div className="grid min-h-[292px] place-items-center px-6 py-10 text-center">
@@ -118,7 +118,7 @@ export default function LandingPage() {
               {[
                 ["IELTS Academic", "48 үг", "12 үг давтах", "#f3d997"],
                 ["Programming terms", "36 үг", "8 үг суралцаж буй", "#fff6e8"],
-                ["Biology basics", "64 үг", "78% эзэмшсэн", "#eaf7f1"],
+                ["TOPIK суурь үгс", "64 үг", "78% эзэмшсэн", "#eaf7f1"],
               ].map(([title, count, statusText, color], index) => (
                 <motion.div whileHover={{ y: -4 }} key={title} className="study-set-card overflow-hidden p-4">
                   <div className="-mx-4 -mt-4 mb-5 h-1.5" style={{ background: color }} />
