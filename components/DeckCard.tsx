@@ -1,75 +1,88 @@
-// /components/DeckCard.tsx
-'use client';
-import React from 'react';
-import { Flame, Clock, ArrowRight, ArrowLeftRight, Circle } from 'lucide-react';
-import type { Deck } from '../types';
+"use client";
 
-type Props = {
-  deck: Deck;
-  onPractice: (deck: Deck, mode: string) => void;
-};
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import type { Deck } from "@/types";
+import type { DeckDetail } from "@/app/deck/[id]/DeckClient";
+import DecorativeLayer from "@/components/ui/DecorativeLayer";
+import { fetchJson } from "@/lib/http";
 
-export default function DeckCard({ deck, onPractice }: Props) {
+export default function DeckCard({ deck }: { deck: Deck }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const progress = Math.min(100, Math.max(0, deck.progress || 0));
+  const hasCards = deck.words > 0;
+  const studyHref = hasCards ? `/review/test/${deck.id}` : `/deck/${deck.id}/edit`;
+  const detailHref = `/deck/${deck.id}`;
+
+  const prefetchDetail = () => {
+    router.prefetch(detailHref);
+    void queryClient.prefetchQuery({
+      queryKey: ["deck", deck.id],
+      queryFn: () => fetchJson<DeckDetail>(`/api/decks/${deck.id}`),
+      staleTime: 45_000,
+    });
+  };
+
   return (
-    <div className="group relative">
-      <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="relative bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all overflow-hidden">
-        <div className="p-6 pb-4">
-          <div className="flex items-start justify-between mb-4">
-            <div className="text-4xl">{deck.emoji}</div>
-            <div className="flex items-center gap-1 text-xs bg-white/10 px-2 py-1 rounded-lg">
-              <Flame className="w-3 h-3 text-orange-400" />
-              <span>{deck.streak}</span>
-            </div>
-          </div>
-
-          <h4 className="font-semibold text-lg mb-2">{deck.name}</h4>
-
-          <div className="flex items-center gap-3 text-sm text-white/60 mb-4">
-            <span>{deck.words} үг</span>
-            <Circle className="w-1 h-1 fill-current" />
-            <span>{deck.mastered} эзэмшсэн</span>
-          </div>
-
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-white/60">Явц</span>
-              <span className="font-medium">{deck.progress}%</span>
-            </div>
-            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `${deck.progress}%` }} />
-            </div>
-          </div>
-
-          {deck.dueToday > 0 && (
-            <div className="flex items-center gap-2 text-xs text-orange-400 bg-orange-400/10 px-3 py-2 rounded-lg">
-              <Clock className="w-3 h-3" />
-              <span>{deck.dueToday} үг өнөөдөр давтах</span>
-            </div>
-          )}
+    <motion.article
+      whileHover={{ y: -5 }}
+      transition={{ duration: .18 }}
+      className="group relative flex h-full min-h-[260px] flex-col overflow-hidden rounded-[20px] border border-white/80 bg-white/82 shadow-[0_8px_28px_rgba(31,42,68,.07)] backdrop-blur-xl transition hover:border-[#c8d5ee] hover:shadow-[0_22px_48px_rgba(31,42,68,.12)]"
+    >
+      <DecorativeLayer variant="deck" />
+      <Link
+        href={detailHref}
+        onMouseEnter={prefetchDetail}
+        onFocus={prefetchDetail}
+        className="relative z-10 flex flex-1 flex-col p-5"
+      >
+        <div className="relative flex items-center justify-between gap-4 text-[11px] font-semibold text-[#858995]">
+          <span>{deck.isPublic ? "Бусдад нээлттэй" : "Зөвхөн надад"}</span>
+          <span>{deck.words} карт</span>
         </div>
 
-        <div className="border-t border-white/10 p-4 bg-white/[0.02] space-y-2">
-          <button onClick={() => onPractice(deck, 'ko-mn')} className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 font-medium text-sm transition-all flex items-center justify-center gap-2">
-            <span className="text-base">🇰🇷</span>
-            <ArrowRight className="w-3 h-3" />
-            <span className="text-base">🇲🇳</span>
-            <span className="ml-2">Солонгос → Монгол</span>
-          </button>
-
-          <button onClick={() => onPractice(deck, 'mn-ko')} className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 font-medium text-sm transition-all flex items-center justify-center gap-2">
-            <span className="text-base">🇲🇳</span>
-            <ArrowRight className="w-3 h-3" />
-            <span className="text-base">🇰🇷</span>
-            <span className="ml-2">Монгол → Солонгос</span>
-          </button>
-
-          <button onClick={() => onPractice(deck, 'mixed')} className="w-full py-2.5 rounded-xl bg-white text-black font-medium hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
-            <ArrowLeftRight className="w-4 h-4" />
-            Mixed Practice
-          </button>
+        <div className="relative mt-5">
+          <h3 className="line-clamp-2 text-xl font-bold leading-7 tracking-[-.035em] text-[#211f1a] transition group-hover:text-[#84530f]">
+            {deck.name}
+          </h3>
+          <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-[#777c89]">
+            {deck.description || "Энэ багцад тайлбар оруулаагүй байна."}
+          </p>
         </div>
-      </div>
-    </div>
+
+        <div className="mt-auto pt-6">
+          <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+            <span className="font-medium text-[#777c89]">
+              {deck.dueToday > 0
+                ? `${deck.dueToday} карт давтах`
+                : progress > 0
+                  ? "Суралцаж байна"
+                  : hasCards
+                    ? "Эхлэхэд бэлэн"
+                    : "Карт нэмэх шаардлагатай"}
+            </span>
+            <span className="font-semibold text-[#303441]">{progress}%</span>
+          </div>
+          <div className="h-1 overflow-hidden rounded-full bg-[#eceef2]">
+            <div
+              className="h-full rounded-full bg-[#b7791f] transition-[width] duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </Link>
+
+      <Link
+        href={studyHref}
+        className="relative z-10 flex h-12 items-center justify-between border-t border-[#e7dece] px-5 text-sm font-semibold text-[#84530f] transition hover:bg-[#fff6df]"
+      >
+        <span>{hasCards ? "Суралцах" : "Карт нэмэх"}</span>
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      </Link>
+    </motion.article>
   );
 }

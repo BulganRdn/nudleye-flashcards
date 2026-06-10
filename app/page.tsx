@@ -1,104 +1,137 @@
-// /app/page.tsx
-'use client';
-import React, { useState, useEffect } from 'react';
-import NavBar from '../components/NavBar';
-import BannerSlider from '../components/BannerSlider';
-import StatsGrid from '../components/StatsGrid';
-import DeckList from '../components/DeckList';
-import Discover from '../components/Discover';
-import Library from '../components/Library';
-import BottomNav from '../components/BottomNav';
-import { banners as demoBanners } from '../components/data';
-import type { Deck } from '../types';
-import { myDecks as demoMyDecks, trendingDecks as demoTrending } from '../components/data';
+"use client";
 
-export default function Page() {
-  const [activeTab, setActiveTab] = useState<string>('home');
-  const [currentBanner, setCurrentBanner] = useState<number>(0);
-  const [myDecks, setMyDecks] = useState<Deck[]>([]);
-  const [trendingDecks, setTrendingDecks] = useState<Deck[]>([]);
+import Link from "next/link";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, Check, Layers3, Plus } from "lucide-react";
+import BrandLogo from "@/components/ui/BrandLogo";
+import DecorativeLayer from "@/components/ui/DecorativeLayer";
+
+export default function LandingPage() {
+  const { status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/decks');
-        if (res.ok) {
-          const json = await res.json();
-          setMyDecks(json.myDecks ?? demoMyDecks);
-          setTrendingDecks(json.trending ?? demoTrending);
-          return;
-        }
-      } catch (e) {
-        console.error('Failed to fetch decks:', e);
-      }
-      setMyDecks(demoMyDecks);
-      setTrendingDecks(demoTrending);
-    }
-    load();
-  }, []);
+    if (status === "authenticated") router.replace("/dashboard");
+  }, [status, router]);
 
-  const totalDueWords = myDecks.reduce((sum, deck) => sum + (deck.dueToday || 0), 0);
-
-  const handlePractice = (deck: Deck, mode: string) => {
-    // TODO: router.push(`/review/${deck.id}?mode=${mode}`);
-    alert(`Start practice ${deck.name} (${mode})`);
-  };
-
-  const handleCreate = () => {
-    alert('Create new deck (open modal or route to create page)');
-  };
+  if (status === "loading") {
+    return <div className="app-shell grid min-h-screen place-items-center"><div className="skeleton-pulse h-10 w-10 rounded-full" /></div>;
+  }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white pb-20 md:pb-0">
-      {/* Ambient background layers */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
-      </div>
+    <div className="relative min-h-screen text-[#172033]">
+      <header className="sticky top-0 z-30 border-b border-white/70 bg-white/65 backdrop-blur-2xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
+          <Link href="/">
+            <BrandLogo markClassName="h-8 w-8" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/auth/signin" className="btn-ghost px-4 py-2 text-sm">Нэвтрэх</Link>
+            <Link href="/auth/signup" className="btn-primary px-4 py-2 text-sm">Бүртгүүлэх</Link>
+          </div>
+        </div>
+      </header>
 
-      <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <main>
+        <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center gap-14 px-5 py-16 sm:px-8 lg:grid-cols-[.9fr_1.1fr] lg:py-20">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .3 }}>
+            <p className="eyebrow mb-4">стресс үгүй хялбар суралц</p>
+            <h1 className=" max-w-2xl text-5xl font-bold leading-[1.02] tracking-[-.065em] sm:text-7xl">
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-        {activeTab === 'home' && (
-          <div className="space-y-6 md:space-y-8">
-            <BannerSlider banners={demoBanners} currentBanner={currentBanner} setCurrentBanner={setCurrentBanner} />
-            <StatsGrid />
+               <span className="brand-wordmark-font">
+                Nudl<span className="brand-wordmark-eye">eye</span>
+              </span>
 
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600/20 via-purple-600/20 to-pink-600/20 border border-white/10 p-6 md:p-10">
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-sm font-medium text-orange-400">Daily Review • {totalDueWords} үг хүлээж байна</span>
-                </div>
-                <h2 className="text-2xl md:text-4xl font-bold mb-2">Өнөөдрийн давталт</h2>
-                <p className="text-white/70 mb-6 max-w-xl text-sm md:text-base">
-                  Бүх deck-үүдээс алдсан болон давтах ёстой үгс. SM2 алгоритм автоматаар илүү их анхаарал шаардлагатай үгүүдийг сонгоно.
-                </p>
-                <button onClick={() => alert('Start daily review')} className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-black font-medium hover:scale-105 transition-transform">
-                  Давталт эхлүүлэх
-                </button>
-              </div>
+              <span className="block text-[#9a6418]">Flashcards.</span>
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-[#656976]">
+              Хүссэн хэл, хичээл, дуртай сэдвээ хялбархан нүдлээрэй.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="/auth/signup" className="btn-primary px-6 py-3.5">Туршиж үзэх <ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/auth/signin" className="btn-secondary px-6 py-3.5">Нэвтрэх</Link>
             </div>
+            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#747783]">
+              {["Ямар ч хэл, сэдэв", "Зөвхөн танд зориулагдсан үг цээжлэх арга", "Өргөн хүрээний үгсийн сан"].map((item) => (
+                <span key={item} className="flex items-center gap-1.5"><Check className="h-4 w-4 text-[#238769]" />{item}</span>
+              ))}
+            </div>
+          </motion.div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .4, delay: .08 }} className="relative mx-auto w-full max-w-2xl">
+            <motion.div whileHover={{ y: -4, rotateX: 1 }} transition={{ duration: .2 }} className="flashcard-surface relative min-h-[410px] overflow-hidden">
+              <DecorativeLayer variant="hero" />
+              <div className="flex items-center justify-between border-b border-[#e6e8ee] px-5 py-3 text-xs text-[#7b7f8c]">
+                <span className="font-semibold">Biology essentials</span>
+                <span className="rounded-full bg-[#fff1c7] px-2.5 py-1 font-semibold text-[#84530f]">8 / 18</span>
+              </div>
+              <div className="grid min-h-[292px] place-items-center px-6 py-10 text-center">
                 <div>
-                  <h3 className="text-xl font-bold mb-1">Миний цомгууд</h3>
-                  <p className="text-sm text-white/60">Deck сонгоод чиглэлээ сонгоно уу</p>
+                  <div className="mt-5 text-4xl font-bold tracking-[-.04em]">자기계발</div>
+                  <div className="mx-auto mt-8 max-w-sm rounded-2xl border border-[#dfe3ec] bg-white/85 px-4 py-3.5 text-left text-sm text-[#9a9da8] shadow-sm">
+                    Хариултаа бичнэ үү...
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center justify-between border-t border-[#e6e8ee] bg-[#fafbfc] px-5 py-4">
+                <span className="text-xs text-[#7b7f8c]">Танд давтах 18 үг байна.</span>
+                <span className="rounded-xl bg-[#211e19] px-4 py-2.5 text-xs font-bold text-[#fffaf0] shadow-lg shadow-black/15">Хариулт шалгах</span>
+              </div>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: .45 }} className="absolute -right-4 top-14 hidden rounded-2xl border border-white/80 bg-white/85 p-3 shadow-xl backdrop-blur-xl sm:block">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#929184]">Дуусгасан</div>
+              <div className="mt-1 text-sm font-bold text-[#39745e]">12 карт</div>
+            </motion.div>
+          </motion.div>
+        </section>
 
-              <DeckList decks={myDecks} onPractice={handlePractice} />
+        <section className="border-y border-white/80 bg-white/60 backdrop-blur-xl">
+          <div className="mx-auto grid max-w-7xl md:grid-cols-3">
+            {[
+              { number: "01", title: "Өөрийн сангаа үүсгэ", text: "Сурахыг хүссэн үгсээ нэг дор хадгалж, өдөр бүр давтахад бэлэн болгоорой.", icon: Plus },
+              { number: "02", title: "Картаа эргүүлээд шалга", text: "Асуулт, хариултаар нь ээлжлэн харж, мэдлэгээ бататгангаа шинэ үгсээ тогтоогоорой.", icon: Layers3 },
+              { number: "03", title: "Өдөр бүр багахан нүдэл", text: "Давтах цаг нь болсон үгсээ хараад, өдөр бүр хэдхэн минут зарцуулан тогтоогоорой.", icon: ArrowRight },
+            ].map(({ number, title, text, icon: Icon }) => (
+              <motion.article whileHover={{ backgroundColor: "rgba(255,255,255,.72)" }} key={number} className="border-[#e2e3e7] px-6 py-9 transition md:border-r md:last:border-r-0">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-[#9a6418]">{number}</span>
+                  <Icon className="h-4 w-4 text-[#8a8e9b]" />
+                </div>
+                <h2 className="mt-5 text-lg font-bold">{title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[#707480]">{text}</p>
+              </motion.article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+          <div className="grid gap-8 lg:grid-cols-[.75fr_1.25fr] lg:items-center">
+            <div>
+              <p className="eyebrow">Нэг суралцах урсгал</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-[-.04em]">Сурах зүйлээ нэг дороос ойлгомжтойгоор.</h2>
+              <p className="mt-4 text-sm leading-7 text-[#707480]">Nudleye таны үгсийг зүгээр нэг хадгалаад орхихгүй. Юугаа давтах, юуг нь сайн мэддэг болсон, хаанаас үргэлжлүүлэхээ нэг дороос амархан харна.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["IELTS Academic", "48 үг", "12 үг давтах", "#f3d997"],
+                ["Programming terms", "36 үг", "8 үг суралцаж буй", "#fff6e8"],
+                ["Biology basics", "64 үг", "78% эзэмшсэн", "#eaf7f1"],
+              ].map(([title, count, statusText, color], index) => (
+                <motion.div whileHover={{ y: -4 }} key={title} className="study-set-card overflow-hidden p-4">
+                  <div className="-mx-4 -mt-4 mb-5 h-1.5" style={{ background: color }} />
+                  <div className="font-mono text-[10px] font-bold text-[#929baa]">{String(index + 1).padStart(2, "0")}</div>
+                  <h3 className="mt-5 font-bold">{title}</h3>
+                  <p className="mt-1 text-xs text-[#777b87]">{count}</p>
+                  <div className="mt-5 border-t border-[#e6ded0] pt-3 text-xs font-semibold text-[#84530f]">{statusText}</div>
+                </motion.div>
+              ))}
             </div>
           </div>
-        )}
-
-        {activeTab === 'discover' && <Discover trendingDecks={trendingDecks} />}
-
-        {activeTab === 'library' && <Library myDecks={myDecks} onCreate={handleCreate} />}
-      </div>
-
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        </section>
+      </main>
     </div>
   );
 }
