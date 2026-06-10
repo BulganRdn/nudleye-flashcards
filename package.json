@@ -8,8 +8,7 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed:korean": "node --env-file=.env --env-file-if-exists=.env.local scripts/seed-korean-decks.mjs"
+    "db:migrate:deploy": "prisma migrate deploy"
   },
   "engines": {
     "node": "20.x"

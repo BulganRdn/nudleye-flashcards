@@ -44,16 +44,6 @@ Use Neon's pooled connection for `DATABASE_URL` and direct connection for `DATAB
 
 Vercel runs `pnpm vercel-build`, which generates Prisma Client, applies pending migrations, and builds Next.js.
 
-## Demo content
-
-To replace all existing decks with ten shared Korean vocabulary decks assigned across registered users:
-
-```bash
-pnpm db:seed:korean
-```
-
-This command permanently deletes existing decks, cards, and deck progress before inserting the demo content.
-
 ## Verification
 
 ```bash
