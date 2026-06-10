@@ -1,18 +1,38 @@
 # Nudleye
 
-Nudleye is a Next.js flashcard learning application built around the loop: see, remember, review.
+Nudleye is a modern flashcard learning app for creating vocabulary decks, reviewing words, and building a simple daily learning habit.
 
-## Stack
+Users can create their own word sets, add cards manually or in bulk, review them through an interactive flashcard flow, and copy shared decks into their own library.
+
+## Live Demo
+
+https://nudleye.vercel.app/
+
+## Features
+
+- Create and manage custom vocabulary decks
+- Add word pairs manually or with bulk entry
+- Review words with an interactive flashcard flow
+- Practice through daily review sessions
+- Copy shared decks into your own library
+- Track learning progress and mastered words
+- Credentials authentication with optional Google sign-in
+- Responsive UI for desktop and mobile
+
+## Tech Stack
 
 - Next.js 15 App Router
-- React 19 and TypeScript
+- React 19
+- TypeScript
 - Prisma ORM
 - PostgreSQL in production
 - NextAuth
 - Tailwind CSS 4
-- TanStack Query, Radix UI, and Framer Motion
+- TanStack Query
+- Radix UI
+- Framer Motion
 
-## Local setup
+## Local Setup
 
 Install dependencies:
 
@@ -20,16 +40,16 @@ Install dependencies:
 pnpm install
 ```
 
-Copy `.env.example` to `.env` and add PostgreSQL and authentication values. Then initialize the database:
+Copy `.env.example` to `.env` and add the required database and authentication values.
+
+Then initialize the database and start the development server:
 
 ```bash
 pnpm db:migrate:deploy
 pnpm dev
 ```
 
-## Vercel and Neon deployment
-
-Create a Neon project in the Singapore region when available. Add these variables to Vercel:
+## Environment Variables
 
 ```text
 DATABASE_URL
@@ -40,22 +60,44 @@ GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET
 ```
 
-Use Neon's pooled connection for `DATABASE_URL` and direct connection for `DATABASE_URL_UNPOOLED`. Set `NEXTAUTH_URL` to the final HTTPS deployment URL. Google variables are optional.
+Google authentication is optional. If Google OAuth values are not provided, credentials login can still be used.
 
-Vercel runs `pnpm vercel-build`, which generates Prisma Client, applies pending migrations, and builds Next.js.
+## Vercel and Neon Deployment
 
-## Demo content
+Create a Neon project, preferably in the Singapore region when available.
 
-To replace all existing decks with ten shared Korean vocabulary decks assigned across registered users:
+Use Neon's pooled connection for `DATABASE_URL` and direct connection for `DATABASE_URL_UNPOOLED`.
+
+Set `NEXTAUTH_URL` to the final HTTPS deployment URL.
+
+Vercel runs:
+
+```bash
+pnpm vercel-build
+```
+
+This command generates Prisma Client, applies pending migrations, and builds the Next.js application.
+
+## Demo Content
+
+To replace existing deck-related data with sample Korean vocabulary decks:
 
 ```bash
 pnpm db:seed:korean
 ```
 
-This command permanently deletes existing decks, cards, and deck progress before inserting the demo content.
+> Note: This seed command is intended for local demo setup only. It clears existing deck-related data before inserting sample content.
 
 ## Verification
+
+Run a production build locally:
 
 ```bash
 pnpm build
 ```
+
+## Project Summary
+
+Nudleye was built as a full-stack vocabulary learning project focused on flashcard-based review, daily practice, shared decks, authentication, and responsive user experience.
+
+The main goal of the project is to turn word memorization into a simple repeatable habit: see, remember, review.
