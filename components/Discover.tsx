@@ -19,7 +19,6 @@ type PublicDeck = {
   author: string;
   words: number;
   users: number;
-  verified: boolean;
   createdAt: string;
 };
 type PublicDeckDetail = {

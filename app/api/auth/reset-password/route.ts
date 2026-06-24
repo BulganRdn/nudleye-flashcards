@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req.headers);
+    const limit = rateLimit(`reset-password:${ip}`, 10, 10 * 60 * 1000);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Хэт олон оролдлого. Түр хүлээгээд дахин оролдоно уу." },
+        { status: 429 }
+      );
+    }
+
     const { token, password } = await req.json();
 
     if (typeof token !== "string" || typeof password !== "string") {

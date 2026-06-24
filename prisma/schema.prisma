@@ -11,6 +11,11 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 // NextAuth.js required models
 model Account {
   id                String  @id @default(cuid())
@@ -49,6 +54,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  role          Role      @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -86,9 +92,14 @@ model Deck {
   cards    Card[]
   progress UserProgress[]
 
+  copiedFromId String?
+  copiedFrom   Deck?   @relation("DeckCopies", fields: [copiedFromId], references: [id], onDelete: SetNull)
+  copies       Deck[]  @relation("DeckCopies")
+
   @@index([authorId])
   @@index([isPublic])
   @@index([createdAt])
+  @@index([copiedFromId])
 }
 
 model Card {

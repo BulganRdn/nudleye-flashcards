@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req.headers);
+    const limit = rateLimit(`register:${ip}`, 5, 10 * 60 * 1000);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Хэт олон оролдлого. Түр хүлээгээд дахин оролдоно уу." },
+        { status: 429 }
+      );
+    }
+
     const { name, email, password } = await req.json();
     const normalizedName = typeof name === "string" ? name.trim() : "";
     const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";

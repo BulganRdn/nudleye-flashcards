@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-    // ШИНЭ ЦОМОГ ҮҮСГЭХ (хоосон эсвэл карт агуулсан цомог)
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -113,7 +112,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ХЭРЭГЛЭГЧИЙН ЦОМГИЙГ АВАХ
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -124,7 +122,6 @@ export async function GET() {
 
     const now = new Date();
 
-    // Fetch only due card ids; use the relation count for the full deck size.
     const decks = await prisma.deck.findMany({
       where: {
         authorId: session.user.id,
@@ -154,7 +151,6 @@ export async function GET() {
       },
     });
 
-    // Transform to frontend format
     const transformedDecks = decks.map((deck) => {
       const progress = deck.progress[0];
       const totalCards = deck._count.cards;
