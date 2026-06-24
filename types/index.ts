@@ -11,7 +11,6 @@ export type Deck = {
   dueToday: number;        // өнөөдрийн давтахын урд
   author?: string;
   users?: number;
-  verified?: boolean;
   description?: string | null;
   isPublic?: boolean;
 };

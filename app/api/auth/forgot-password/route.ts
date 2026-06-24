@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
+import { sendEmail, passwordResetEmail, isEmailConfigured } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import crypto from "crypto";
+
+const GENERIC_MESSAGE = "Хэрэв и-мэйл бүртгэлтэй бол сэргээх холбоос илгээгдсэн.";
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req.headers);
+    const limit = rateLimit(`forgot-password:${ip}`, 3, 10 * 60 * 1000);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Хэт олон оролдлого. Түр хүлээгээд дахин оролдоно уу." },
+        { status: 429 }
+      );
+    }
+
     const { email } = await req.json();
     const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
@@ -11,21 +24,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "И-мэйл шаардлагатай." }, { status: 400 });
     }
 
-    if (process.env.NODE_ENV === "production") {
-      return NextResponse.json(
-        { error: "Нууц үг сэргээх и-мэйл үйлчилгээ одоогоор тохируулагдаагүй байна." },
-        { status: 503 }
-      );
-    }
-
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
-    if (!user) {
-      return NextResponse.json({
-        message: "Хэрэв и-мэйл бүртгэлтэй бол сэргээх хүсэлт үүссэн.",
-      });
+    if (!user || !user.password) {
+      return NextResponse.json({ message: GENERIC_MESSAGE });
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -34,7 +38,6 @@ export async function POST(req: Request) {
     await prisma.verificationToken.deleteMany({
       where: { identifier: normalizedEmail },
     });
-
     await prisma.verificationToken.create({
       data: {
         identifier: normalizedEmail,
@@ -44,11 +47,16 @@ export async function POST(req: Request) {
     });
 
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    console.info(`Development password reset link: ${baseUrl}/auth/reset-password?token=${resetToken}`);
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
 
-    return NextResponse.json({
-      message: "Хөгжүүлэлтийн орчинд сэргээх холбоос серверийн log-д үүслээ.",
-    });
+    const { subject, html, text } = passwordResetEmail(resetUrl);
+    const sent = await sendEmail({ to: normalizedEmail, subject, html, text });
+
+    if (!sent && !isEmailConfigured()) {
+      console.info(`[dev] Password reset link: ${resetUrl}`);
+    }
+
+    return NextResponse.json({ message: GENERIC_MESSAGE });
   } catch (error) {
     console.error("Нууц үгийг сэргээхэд алдаа:", error);
     return NextResponse.json(

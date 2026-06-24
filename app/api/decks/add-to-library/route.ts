@@ -39,6 +39,7 @@ export async function POST(req: Request) {
           description: originalDeck.description,
           isPublic: false,
           authorId: session.user.id,
+          copiedFromId: originalDeck.id,
         },
       });
 

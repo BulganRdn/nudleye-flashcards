@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
           <div>
             <label className="label" htmlFor="email">И-мэйл</label>
             <input id="email" type="email" autoComplete="email" required value={email}
-              onChange={(event) => setEmail(event.target.value)} className="field" placeholder="name@example.com" />
+              onChange={(event) => setEmail(event.target.value)} className="field" placeholder="name@nudleye.com" />
           </div>
           <button disabled={loading} className="btn-primary w-full justify-center px-4 py-3 disabled:opacity-50">
             {loading ? "Илгээж байна..." : "Сэргээх холбоос илгээх"}
